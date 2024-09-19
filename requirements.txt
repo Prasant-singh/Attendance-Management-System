@@ -1,0 +1,379 @@
+# certifi==2020.6.20
+# chardet==3.0.4
+# click==7.1.2
+# # cmake==3.18.2.post1
+# decorator==4.4.2
+# # dlib==19.18.0
+# cmake==3.25.2
+# dlib==19.24.2
+# face-recognition==1.3.0
+# face-recognition-models==0.3.0
+# idna==2.10
+# imageio==2.9.0
+# imageio-ffmpeg==0.4.2
+# moviepy==1.0.3
+# numpy==1.18.4
+# opencv-python==4.4.0.46
+# Pillow==8.0.1
+# proglog==0.1.9
+# requests==2.24.0
+# tqdm==4.51.0
+# urllib3==1.25.11
+# wincertstore==0.2
+
+
+certifi==2023.7.22
+chardet==5.1.0
+click==8.1.3
+cmake==3.25.2
+decorator==4.4.2
+dlib==19.24.2
+face-recognition==1.3.0
+face-recognition-models==0.3.0
+idna==3.4
+imageio==2.25.1
+imageio-ffmpeg==0.4.9
+moviepy==1.0.3
+numpy==1.23.5
+opencv-python==4.7.0.72
+Pillow==9.3.0
+proglog==0.1.9
+requests==2.28.2
+tqdm==4.65.0
+urllib3==1.26.15
+wincertstore==0.2
+flask
+flask-socketio
+pyttsx3
+pandas
+
+
+
+
+
+#####################
+######################
+# THIS IS ALSO GOOD BUT IT SAME TIME ADD LOGOUT TIME IN THE ATTENDANCE LIST
+
+# import cv2
+# import numpy as np
+# import face_recognition
+# import os
+# from datetime import datetime, timedelta
+# import json
+# import pandas as pd
+# import pyttsx3  # Import pyttsx3
+
+# # Paths
+# training_images_path = 'Training_images'
+# dataset_path = 'dataset'
+# embeddings_path = 'embeddings'
+# attendance_log_path = 'attendance.json'
+# attendance_csv_path = 'Attendance.csv'
+
+# # Create directories if they don't exist
+# os.makedirs(dataset_path, exist_ok=True)
+# os.makedirs(embeddings_path, exist_ok=True)
+
+# # Initialize text-to-speech engine
+# engine = pyttsx3.init()
+
+# # Load and encode images
+# def findEncodings(images):
+#     encodeList = []
+#     for img in images:
+#         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#         try:
+#             encode = face_recognition.face_encodings(img)[0]
+#             encodeList.append(encode)
+#         except IndexError:
+#             print(f"Warning: No face found in image")
+#     return encodeList
+
+# def loadTrainingImages(path):
+#     images = []
+#     classNames = []
+#     myList = os.listdir(path)
+#     print("Training images:", myList)
+#     for cl in myList:
+#         curImg = cv2.imread(f'{path}/{cl}')
+#         images.append(curImg)
+#         classNames.append(os.path.splitext(cl)[0])
+#     print("Class names:", classNames)
+#     return images, classNames
+
+# def markAttendance(name):
+#     now = datetime.now()
+#     today = now.strftime('%Y-%m-%d')
+
+#     # Load existing attendance log, handling empty or corrupted JSON
+#     if not os.path.exists(attendance_log_path):
+#         attendance = {}
+#     else:
+#         try:
+#             with open(attendance_log_path, 'r') as f:
+#                 attendance = json.load(f)
+#         except json.JSONDecodeError:
+#             attendance = {}
+
+#     # Ensure that attendance[name] is a dictionary and today's entry is a list
+#     if name not in attendance:
+#         attendance[name] = {}
+
+#     if today not in attendance[name]:
+#         attendance[name][today] = []
+
+#     # If there's an old string entry (from older format), convert it to list
+#     elif isinstance(attendance[name][today], str):
+#         attendance[name][today] = [{'login': attendance[name][today]}]  # Convert old entry to new format
+
+#     # If user already has an entry for today
+#     if attendance[name][today]:
+#         last_entry = attendance[name][today][-1]
+#         last_login = datetime.strptime(last_entry['login'], '%Y-%m-%d %H:%M:%S')
+        
+#         # If user has not logged out or reappears within 10 minutes, don't log again
+#         if 'logout' not in last_entry:
+#             last_entry['logout'] = now.strftime('%Y-%m-%d %H:%M:%S')
+#             with open(attendance_log_path, 'w') as f:
+#                 json.dump(attendance, f)
+#             print(f"{name} logged out at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+#             return False
+#         elif (now - last_login) < timedelta(minutes=10):
+#             print(f"{name} reappeared within 10 minutes, skipping new login.")
+#             # Announce but do not log reappearance
+#             engine.say(f"{name} logged in successfully")
+#             engine.runAndWait()
+#             return False
+
+#     # Create a new login entry
+#     attendance[name][today].append({
+#         'login': now.strftime('%Y-%m-%d %H:%M:%S')
+#     })
+#     with open(attendance_log_path, 'w') as f:
+#         json.dump(attendance, f)
+
+#     print(f"{name} logged in at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+    
+#     # Speak the login success message
+#     engine.say(f"{name} logged in successfully")
+#     engine.runAndWait()
+
+#     return True
+
+# # Load training images
+# images, classNames = loadTrainingImages(training_images_path)
+# encodeListKnown = findEncodings(images)
+# print('Encoding Complete')
+
+# # Initialize webcam
+# cap = cv2.VideoCapture(0)
+
+# while True:
+#     ret, img = cap.read()
+#     if not ret:
+#         print("Failed to capture image from webcam")
+#         break
+
+#     # Resize the captured image to speed up processing
+#     imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+#     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
+
+#     # Detect faces and encodings
+#     facesCurFrame = face_recognition.face_locations(imgS)
+#     encodesCurFrame = face_recognition.face_encodings(imgS, facesCurFrame)
+
+#     for encodeFace, faceLoc in zip(encodesCurFrame, facesCurFrame):
+#         matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
+#         faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+#         matchIndex = np.argmin(faceDis)
+
+#         if matches[matchIndex]:
+#             name = classNames[matchIndex].upper()
+#             print(f"Match found: {name}")
+
+#             y1, x2, y2, x1 = faceLoc
+#             y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
+
+#             cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+#             cv2.rectangle(img, (x1, y2 - 35), (x2, y2), (0, 255, 0), cv2.FILLED)
+#             cv2.putText(img, name, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
+
+#             markAttendance(name)
+
+#     cv2.imshow('Webcam', img)
+
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
+
+# cap.release()
+# cv2.destroyAllWindows()
+
+# # Convert attendance log to CSV
+# with open(attendance_log_path, 'r') as f:
+#     attendance_log = json.load(f)
+# df = pd.DataFrame(list(attendance_log.items()), columns=['Name', 'Timestamp'])
+# df.to_csv('attendance.csv', index=False)
+
+
+
+
+
+# import cv2
+# import numpy as np
+# import face_recognition
+# import os
+# from datetime import datetime, timedelta
+# import json
+# import pandas as pd
+# import pyttsx3
+
+# # Paths
+# training_images_path = 'Training_images'
+# attendance_log_path = 'attendance.json'
+# attendance_csv_path = 'Attendance.csv'
+
+# # Initialize text-to-speech engine
+# engine = pyttsx3.init()
+
+# # Load and encode images
+# def findEncodings(images):
+#     encodeList = []
+#     for img in images:
+#         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#         try:
+#             encode = face_recognition.face_encodings(img)[0]
+#             encodeList.append(encode)
+#         except IndexError:
+#             print(f"Warning: No face found in image")
+#     return encodeList
+
+# def loadTrainingImages(path):
+#     images = []
+#     classNames = []
+#     myList = os.listdir(path)
+#     print("Training images:", myList)
+#     for cl in myList:
+#         curImg = cv2.imread(f'{path}/{cl}')
+#         images.append(curImg)
+#         classNames.append(os.path.splitext(cl)[0])
+#     print("Class names:", classNames)
+#     return images, classNames
+
+# def markAttendance(name):
+#     now = datetime.now()
+#     today = now.strftime('%Y-%m-%d')
+    
+#     # Check if attendance file exists
+#     if not os.path.exists(attendance_log_path):
+#         with open(attendance_log_path, 'w') as f:
+#             json.dump({}, f)
+    
+#     with open(attendance_log_path, 'r') as f:
+#         attendance = json.load(f)
+
+#     # Initialize user attendance if not present
+#     if name not in attendance:
+#         attendance[name] = {}
+
+#     # Check if today is already in attendance
+#     if today not in attendance[name]:
+#         attendance[name][today] = [{'login': now.strftime('%Y-%m-%d %H:%M:%S')}]
+#         print(f"{name} logged in at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+#         engine.say(f"{name} logged in successfully")
+#         engine.runAndWait()
+#     else:
+#         last_entry = attendance[name][today][-1]
+
+#         # Handle Overtime or Logout
+#         if 'logout' in last_entry and (now - datetime.strptime(last_entry['logout'], '%Y-%m-%d %H:%M:%S')) >= timedelta(minutes=10):
+#             # Add Overtime login
+#             attendance[name][today].append({'Over Time login': now.strftime('%Y-%m-%d %H:%M:%S')})
+#             print(f"{name} Over Time login at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+#             engine.say(f"{name} logged in successfully for overtime")
+#             engine.runAndWait()
+
+#         elif 'Over Time login' in last_entry and 'Over Time logout' not in last_entry and (now - datetime.strptime(last_entry['Over Time login'], '%Y-%m-%d %H:%M:%S')) >= timedelta(minutes=10):
+#             # Add Overtime logout
+#             last_entry['Over Time logout'] = now.strftime('%Y-%m-%d %H:%M:%S')
+#             print(f"{name} Over Time logout at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+#             engine.say(f"{name} logged out successfully for overtime")
+#             engine.runAndWait()
+
+#         elif 'login' in last_entry and 'logout' not in last_entry and (now - datetime.strptime(last_entry['login'], '%Y-%m-%d %H:%M:%S')) >= timedelta(minutes=10):
+#             # Add Logout after 10 min
+#             last_entry['logout'] = now.strftime('%Y-%m-%d %H:%M:%S')
+#             print(f"{name} logged out at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+#             engine.say(f"{name} logged out successfully")
+#             engine.runAndWait()
+
+#     # Save updated attendance
+#     with open(attendance_log_path, 'w') as f:
+#         json.dump(attendance, f, indent=4)
+
+#     # Update CSV
+#     update_csv(attendance)
+
+# def update_csv(attendance):
+#     data = []
+#     for name, days in attendance.items():
+#         for day, entries in days.items():
+#             for entry in entries:
+#                 if 'login' in entry and 'logout' in entry:
+#                     data.append([name, day, entry['login'], entry['logout']])
+#                 elif 'Over Time login' in entry and 'Over Time logout' in entry:
+#                     data.append([name, day, entry['Over Time login'], entry['Over Time logout']])
+#                 elif 'login' in entry:
+#                     data.append([name, day, entry['login'], ''])
+#                 elif 'Over Time login' in entry:
+#                     data.append([name, day, entry['Over Time login'], ''])
+
+#     df = pd.DataFrame(data, columns=['Name', 'Date', 'Login', 'Logout'])
+#     df.to_csv(attendance_csv_path, index=False)
+
+# # Load training images
+# images, classNames = loadTrainingImages(training_images_path)
+# encodeListKnown = findEncodings(images)
+# print('Encoding Complete')
+
+# # Initialize webcam
+# cap = cv2.VideoCapture(0)
+# while True:
+#     ret, img = cap.read()
+#     if not ret:
+#         print("Failed to capture image from webcam")
+#         break
+
+#     # Resize the captured image to speed up processing
+#     imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
+#     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
+
+#     # Detect faces and encodings
+#     facesCurFrame = face_recognition.face_locations(imgS)
+#     encodesCurFrame = face_recognition.face_encodings(imgS, facesCurFrame)
+
+#     for encodeFace, faceLoc in zip(encodesCurFrame, facesCurFrame):
+#         matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
+#         faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+#         matchIndex = np.argmin(faceDis)
+
+#         if matches[matchIndex]:
+#             name = classNames[matchIndex].upper()
+#             print(f"Match found: {name}")
+
+#             y1, x2, y2, x1 = faceLoc
+#             y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
+
+#             cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+#             cv2.rectangle(img, (x1, y2 - 35), (x2, y2), (0, 255, 0), cv2.FILLED)
+#             cv2.putText(img, name, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
+
+#             markAttendance(name)
+
+#     cv2.imshow('Webcam', img)
+
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
+
+# cap.release()
+# cv2.destroyAllWindows()
