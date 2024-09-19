@@ -1,3 +1,4 @@
+
 import cv2
 import numpy as np
 import face_recognition
@@ -42,6 +43,7 @@ def loadTrainingImages(path):
 def markAttendance(name):
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
+    current_time = now.strftime('%H:%M')  # Time in HH:MM format
     
     # Check if attendance file exists and is not empty
     if not os.path.exists(attendance_log_path) or os.path.getsize(attendance_log_path) == 0:
@@ -64,32 +66,39 @@ def markAttendance(name):
 
     # Check if today is already in attendance
     if today not in attendance[name]:
-        attendance[name][today] = [{'login': now.strftime('%Y-%m-%d %H:%M:%S')}]
-        print(f"{name} logged in at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+        # First login for the day
+        attendance[name][today] = [{'login': current_time}]
+        print(f"{name} logged in at {current_time}")
         engine.say(f"{name} logged in successfully")
         engine.runAndWait()
     else:
         last_entry = attendance[name][today][-1]
+        
+        # Helper function to calculate time difference
+        def time_diff_in_minutes(time1, time2):
+            time1_dt = datetime.strptime(time1, '%H:%M')
+            time2_dt = datetime.strptime(time2, '%H:%M')
+            return (time2_dt - time1_dt).total_seconds() / 60  # Return difference in minutes
 
-        # Handle Overtime or Logout
-        if 'logout' in last_entry and (now - datetime.strptime(last_entry['logout'], '%Y-%m-%d %H:%M:%S')) >= timedelta(minutes=10):
+        # Handle Overtime or Logout logic based on the last recorded time
+        if 'logout' in last_entry and time_diff_in_minutes(last_entry['logout'], current_time) >= 10:
             # Add Overtime login
-            attendance[name][today].append({'Over Time login': now.strftime('%Y-%m-%d %H:%M:%S')})
-            print(f"{name} Over Time login at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+            attendance[name][today].append({'Over Time login': current_time})
+            print(f"{name} Over Time login at {current_time}")
             engine.say(f"{name} logged in successfully for overtime")
             engine.runAndWait()
 
-        elif 'Over Time login' in last_entry and 'Over Time logout' not in last_entry and (now - datetime.strptime(last_entry['Over Time login'], '%Y-%m-%d %H:%M:%S')) >= timedelta(minutes=10):
+        elif 'Over Time login' in last_entry and 'Over Time logout' not in last_entry and time_diff_in_minutes(last_entry['Over Time login'], current_time) >= 10:
             # Add Overtime logout
-            last_entry['Over Time logout'] = now.strftime('%Y-%m-%d %H:%M:%S')
-            print(f"{name} Over Time logout at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+            last_entry['Over Time logout'] = current_time
+            print(f"{name} Over Time logout at {current_time}")
             engine.say(f"{name} logged out successfully for overtime")
             engine.runAndWait()
 
-        elif 'login' in last_entry and 'logout' not in last_entry and (now - datetime.strptime(last_entry['login'], '%Y-%m-%d %H:%M:%S')) >= timedelta(minutes=10):
+        elif 'login' in last_entry and 'logout' not in last_entry and time_diff_in_minutes(last_entry['login'], current_time) >= 10:
             # Add Logout after 10 min
-            last_entry['logout'] = now.strftime('%Y-%m-%d %H:%M:%S')
-            print(f"{name} logged out at {now.strftime('%Y-%m-%d %H:%M:%S')}")
+            last_entry['logout'] = current_time
+            print(f"{name} logged out at {current_time}")
             engine.say(f"{name} logged out successfully")
             engine.runAndWait()
 
@@ -99,7 +108,6 @@ def markAttendance(name):
 
     # Update CSV
     update_csv(attendance)
-
 
 
 def update_csv(attendance):
@@ -118,6 +126,7 @@ def update_csv(attendance):
 
     df = pd.DataFrame(data, columns=['Name', 'Date', 'Login', 'Logout'])
     df.to_csv(attendance_csv_path, index=False)
+
 
 # Load training images
 images, classNames = loadTrainingImages(training_images_path)
@@ -165,3 +174,4 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+
