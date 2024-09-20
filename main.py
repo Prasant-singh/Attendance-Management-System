@@ -1,4 +1,3 @@
-
 import cv2
 import numpy as np
 import face_recognition
@@ -43,7 +42,6 @@ def loadTrainingImages(path):
 def markAttendance(name):
     now = datetime.now()
     today = now.strftime('%Y-%m-%d')
-    current_time = now.strftime('%H:%M')  # Time in HH:MM format
     
     # Check if attendance file exists and is not empty
     if not os.path.exists(attendance_log_path) or os.path.getsize(attendance_log_path) == 0:
@@ -66,39 +64,32 @@ def markAttendance(name):
 
     # Check if today is already in attendance
     if today not in attendance[name]:
-        # First login for the day
-        attendance[name][today] = [{'login': current_time}]
-        print(f"{name} logged in at {current_time}")
+        attendance[name][today] = [{'login': now.strftime('%Y-%m-%d %H:%M:%S')}]
+        print(f"{name} logged in at {now.strftime('%Y-%m-%d %H:%M:%S')}")
         engine.say(f"{name} logged in successfully")
         engine.runAndWait()
     else:
         last_entry = attendance[name][today][-1]
-        
-        # Helper function to calculate time difference
-        def time_diff_in_minutes(time1, time2):
-            time1_dt = datetime.strptime(time1, '%H:%M')
-            time2_dt = datetime.strptime(time2, '%H:%M')
-            return (time2_dt - time1_dt).total_seconds() / 60  # Return difference in minutes
 
-        # Handle Overtime or Logout logic based on the last recorded time
-        if 'logout' in last_entry and time_diff_in_minutes(last_entry['logout'], current_time) >= 10:
+        # Handle Overtime or Logout
+        if 'logout' in last_entry and (now - datetime.strptime(last_entry['logout'], '%Y-%m-%d %H:%M:%S')) >= timedelta(minutes=10):
             # Add Overtime login
-            attendance[name][today].append({'Over Time login': current_time})
-            print(f"{name} Over Time login at {current_time}")
+            attendance[name][today].append({'Over Time login': now.strftime('%Y-%m-%d %H:%M:%S')})
+            print(f"{name} Over Time login at {now.strftime('%Y-%m-%d %H:%M:%S')}")
             engine.say(f"{name} logged in successfully for overtime")
             engine.runAndWait()
 
-        elif 'Over Time login' in last_entry and 'Over Time logout' not in last_entry and time_diff_in_minutes(last_entry['Over Time login'], current_time) >= 10:
+        elif 'Over Time login' in last_entry and 'Over Time logout' not in last_entry and (now - datetime.strptime(last_entry['Over Time login'], '%Y-%m-%d %H:%M:%S')) >= timedelta(minutes=10):
             # Add Overtime logout
-            last_entry['Over Time logout'] = current_time
-            print(f"{name} Over Time logout at {current_time}")
+            last_entry['Over Time logout'] = now.strftime('%Y-%m-%d %H:%M:%S')
+            print(f"{name} Over Time logout at {now.strftime('%Y-%m-%d %H:%M:%S')}")
             engine.say(f"{name} logged out successfully for overtime")
             engine.runAndWait()
 
-        elif 'login' in last_entry and 'logout' not in last_entry and time_diff_in_minutes(last_entry['login'], current_time) >= 10:
+        elif 'login' in last_entry and 'logout' not in last_entry and (now - datetime.strptime(last_entry['login'], '%Y-%m-%d %H:%M:%S')) >= timedelta(minutes=10):
             # Add Logout after 10 min
-            last_entry['logout'] = current_time
-            print(f"{name} logged out at {current_time}")
+            last_entry['logout'] = now.strftime('%Y-%m-%d %H:%M:%S')
+            print(f"{name} logged out at {now.strftime('%Y-%m-%d %H:%M:%S')}")
             engine.say(f"{name} logged out successfully")
             engine.runAndWait()
 
@@ -108,6 +99,7 @@ def markAttendance(name):
 
     # Update CSV
     update_csv(attendance)
+
 
 
 def update_csv(attendance):
@@ -126,7 +118,6 @@ def update_csv(attendance):
 
     df = pd.DataFrame(data, columns=['Name', 'Date', 'Login', 'Logout'])
     df.to_csv(attendance_csv_path, index=False)
-
 
 # Load training images
 images, classNames = loadTrainingImages(training_images_path)
@@ -150,13 +141,13 @@ while True:
     encodesCurFrame = face_recognition.face_encodings(imgS, facesCurFrame)
 
     for encodeFace, faceLoc in zip(encodesCurFrame, facesCurFrame):
-        matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
+        matches = face_recognition.compare_faces(encodeListKnown, encodeFace, tolerance=0.5)  # Lower tolerance for stricter matching reduce the chance of false positives.
         faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
         matchIndex = np.argmin(faceDis)
 
-        if matches[matchIndex]:
+        if matches[matchIndex] and faceDis[matchIndex] < 0.5:  # Check if the distance is below threshold if the closest face distance is above a threshold (e.g., 0.4 or 0.5), it’s likely a false match:
             name = classNames[matchIndex].upper()
-            print(f"Match found: {name}")
+            print(f"Match found: {name} with distance: {faceDis[matchIndex]}")
 
             y1, x2, y2, x1 = faceLoc
             y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
@@ -166,6 +157,8 @@ while True:
             cv2.putText(img, name, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
 
             markAttendance(name)
+        else:
+            print(f"No confident match found, minimum distance: {faceDis[matchIndex]}")
 
     cv2.imshow('Webcam', img)
 
@@ -174,4 +167,3 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-
